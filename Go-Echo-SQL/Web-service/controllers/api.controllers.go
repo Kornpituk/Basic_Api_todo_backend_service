@@ -1,87 +1,94 @@
 package controllers
 
-// import (
-// 	"myapp/model"
-// 	"net/http"
-
-// 	"github.com/labstack/echo/v4"
-// 	"gorm.io/driver/mysql"
-// 	"gorm.io/gorm"
-// )
+import (
+	"myapp/model"
+	"net/http"
 
 
-// func getAllEmployees(c echo.Context) error {
-// 	dsn := "root@tcp(127.0.0.1:3306)/go_orm?charset=utf8mb4&parseTime=True&loc=Local"
-// 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
-// 	if err != nil {
-// 		panic("failed to connect database")
-// 	}
-// 	var employees []model.Employee
-// 	db.Find(&employees)
-// 	return c.JSON(http.StatusOK, employees)
-// }
+	"github.com/labstack/echo/v4"
+	"myapp/database"
 
-// func getEmployee(c echo.Context) error {
-// 	dsn := "root@tcp(127.0.0.1:3306)/go_orm?charset=utf8mb4&parseTime=True&loc=Local"
-// 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
-// 	if err != nil {
-// 		panic("failed to connect database")
-// 	}
+	"strconv"
+)
+
+// function Data Bases Connect SQL
+func init(){
+	database.ConnectDB()
+}
+
+
+
+//Get All Todos
+func GetAllTodos(c echo.Context) error {
+	var todo []model.Todo
+	database.DB.Find(&todo)
+	return c.JSON(http.StatusOK, todo)
+}
+
+
+//Create Todo 
+func CreatedTodo (c echo.Context) error {
+	todo := new(model.Todo)
+	if err := c.Bind(todo); err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	database.DB.Create(&todo)
+	return c.JSON(http.StatusOK, todo)
+  }
+
+
+
+//Get Todo with ID
+func GetTodo (c echo.Context) error {
+
+	id, _ := strconv.Atoi(c.Param("id")) 
+	var todo model.Todo
+
+	database.DB.First(&todo, id)
+	if int(todo.ID) == id{
+		return c.JSON(http.StatusOK, todo)
+	}
+	return c.JSON(http.StatusOK, "Not Found ID Todo!")
+}
 	
-// 	var employees []model.Employee
-// 	db.Find(&employees)
-// 	return c.JSON(http.StatusOK, employees)
-// }
 
-// func createdEmplyee(c echo.Context) error {
-// 	dsn := "root@tcp(127.0.0.1:3306)/go_orm?charset=utf8mb4&parseTime=True&loc=Local"
-// 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
-// 	if err != nil {
-// 		panic("failed to connect database")
-// 	}
+// Edit Todo 
+func EditedTodo (c echo.Context) error {
+	var err error
+	id, _ := strconv.Atoi(c.Param("id")) 
+	Todo := new(model.Todo)
 
-// 	employee := new(model.Employee)
-// 	if err = c.Bind(employee); err != nil {
-// 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-// 	  }
+	updatedTodo := new(model.Todo)
+	if err = c.Bind(Todo); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		}
 
-// 	result := db.Create(&employee)
-// 	return c.JSON(http.StatusOK, result)
-// }
+	database.DB.First(&updatedTodo, id)
+	if int(updatedTodo.ID) == id{
+		updatedTodo.Fname = Todo.Fname
+		updatedTodo.Lname = Todo.Lname
+		updatedTodo.Task = Todo.Task
+		database.DB.Save(updatedTodo)
+		return c.JSON(http.StatusOK, updatedTodo)
+	}
 
-// func updatedEmplyee(c echo.Context) error {
-// 	dsn := "root@tcp(127.0.0.1:3306)/go_orm?charset=utf8mb4&parseTime=True&loc=Local"
-// 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
-// 	if err != nil {
-// 		panic("failed to connect database")
-// 	}
+		
+	return c.JSON(http.StatusOK, "Edite Todo Fail!")
 
-// 	employee := new(model.Employee)
-// 	updatedEmplyee := new(model.Employee)
-// 	if err = c.Bind(employee); err != nil {
-// 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-// 	  }
+}
 
-// 	db.First(&updatedEmplyee, employee.ID)
-// 	updatedEmplyee.Fname = employee.Fname
-// 	updatedEmplyee.Lname = employee.Lname
-// 	updatedEmplyee.Task = employee.Task
-// 	db.Save(updatedEmplyee)
 
-// 	return c.JSON(http.StatusOK, updatedEmplyee)
-// }
+//Delete Todo 
+func DeletedTodo (c echo.Context) error {
 
-// func deletedEmployee(c echo.Context) error {
-// 	dsn := "root@tcp(127.0.0.1:3306)/go_orm?charset=utf8mb4&parseTime=True&loc=Local"
-// 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
-// 	if err != nil {
-// 		panic("failed to connect database")
-// 	}
+	id, _ := strconv.Atoi(c.Param("id"))
+	var todo model.Todo
+	database.DB.First(&todo, id)
 
-// 	id := c.Param("id")
-// 	var employee model.Employee
-// 	db.First(&employee, id)
-
-// 	db.Delete(&employee)
-// 	return c.JSON(http.StatusOK, employee)
-// }
+	if int(todo.ID) == id{
+		database.DB.Where("ID=?",id).Delete(&todo)
+		return c.JSON(http.StatusOK, todo)
+	}
+	return c.JSON(http.StatusOK, "Delete Todo Fail!")
+}
