@@ -66,8 +66,8 @@ func EditedTodo (c echo.Context) error {
 
 	database.DB.First(&updatedTodo, id)
 	if int(updatedTodo.ID) == id{
-		updatedTodo.Fname = Todo.Fname
-		updatedTodo.Lname = Todo.Lname
+		updatedTodo.First_name = Todo.First_name
+		updatedTodo.Last_name = Todo.Last_name
 		updatedTodo.Task = Todo.Task
 		database.DB.Save(updatedTodo)
 		return c.JSON(http.StatusOK, updatedTodo)

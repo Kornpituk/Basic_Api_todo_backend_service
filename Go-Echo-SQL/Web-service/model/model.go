@@ -4,7 +4,7 @@ import "gorm.io/gorm"
 
 type Todo struct {
 	gorm.Model
-	Fname string `json:"Fname"`
-	Lname string `json:"Lname"`
+	First_name string `json:"First_name"`
+	Last_name string `json:"Last_name"`
 	Task  string `json:"Task"`
 }
