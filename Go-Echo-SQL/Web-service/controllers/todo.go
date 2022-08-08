@@ -4,17 +4,21 @@ import (
 	"myapp/model"
 	"net/http"
 
+	"myapp/database"
+
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 
 	"github.com/labstack/echo/v4"
-	"myapp/database"
+
 
 	"strconv"
 )
 
 // function Data Bases Connect SQL
-func init(){
-	database.ConnectDB()
-}
+// func init(){
+// 	database.ConnectDB()
+// }
 
 
 
@@ -46,16 +50,25 @@ func GetTodo (c echo.Context) error {
 	var todo model.Todo
 
 	database.DB.First(&todo, id)
+	
 	if int(todo.ID) == id{
 		return c.JSON(http.StatusOK, todo)
 	}
-	return c.JSON(http.StatusOK, "Not Found ID Todo!")
+	return c.JSON(http.StatusOK, "Not Found ID "+c.Param("id"))
 }
 	
 
 // Edit Todo 
 func EditedTodo (c echo.Context) error {
-	var err error
+
+	dsn := "root@tcp(127.0.0.1:3306)/go_orm?charset=utf8mb4&parseTime=True&loc=Local"
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+
+	if err != nil {
+		panic("failed to connect database")
+	}
+
+
 	id, _ := strconv.Atoi(c.Param("id")) 
 	Todo := new(model.Todo)
 
@@ -64,17 +77,19 @@ func EditedTodo (c echo.Context) error {
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 		}
 
-	database.DB.First(&updatedTodo, id)
+	db.First(&updatedTodo, id)
+	
 	if int(updatedTodo.ID) == id{
 		updatedTodo.First_name = Todo.First_name
 		updatedTodo.Last_name = Todo.Last_name
 		updatedTodo.Task = Todo.Task
-		database.DB.Save(updatedTodo)
+		db.Save(updatedTodo)
 		return c.JSON(http.StatusOK, updatedTodo)
 	}
 
 		
-	return c.JSON(http.StatusOK, "Edite Todo Fail!")
+	return c.JSON(http.StatusOK, "Edite Todo Fail!" + "  Not Found ID "+c.Param("id"))
+	
 
 }
 
@@ -82,13 +97,20 @@ func EditedTodo (c echo.Context) error {
 //Delete Todo 
 func DeletedTodo (c echo.Context) error {
 
+	dsn := "root@tcp(127.0.0.1:3306)/go_orm?charset=utf8mb4&parseTime=True&loc=Local"
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+
+	if err != nil {
+		panic("failed to connect database")
+	}
+
 	id, _ := strconv.Atoi(c.Param("id"))
 	var todo model.Todo
 	database.DB.First(&todo, id)
 
 	if int(todo.ID) == id{
-		database.DB.Where("ID=?",id).Delete(&todo)
+		db.Where("ID=?",id).Delete(&todo)
 		return c.JSON(http.StatusOK, todo)
 	}
-	return c.JSON(http.StatusOK, "Delete Todo Fail!")
+	return c.JSON(http.StatusOK, "Delete Todo Fail!" + "  Not Found ID "+c.Param("id") )
 }
